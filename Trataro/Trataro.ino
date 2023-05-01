@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <ESP32Servo.h>
+#include <esp_now.h>
 
 #define PAN_PIN 14
 #define TILT_PIN 15
@@ -38,6 +39,19 @@ std::vector<MOTOR_PINS> motorPins =
 
 #define FORWARD 1
 #define BACKWARD -1
+
+//ESP-NOW variable
+int receive_sLeft_val;
+int receive_sRight_val;
+long receive_distance_val;
+
+typedef struct struct_message {
+    int sLeft;
+    int sRight;
+    long distance;
+} struct_message; //--> struct_message to receive data.
+
+struct_message receive_Data;
 
 const int PWMFreq = 1000; /* 1 KHz */
 const int PWMResolution = 8;
@@ -109,7 +123,7 @@ const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
       width: 100%;
       height: 15px;
       border-radius: 5px;
-      background: #d3d3d3;
+      background: #00FF99;
       outline: none;
       opacity: 0.7;
       -webkit-transition: .2s;
@@ -126,7 +140,7 @@ const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
       width: 25px;
       height: 25px;
       border-radius: 50%;
-      background: red;
+      background: #595959;
       cursor: pointer;
     }
 
@@ -134,7 +148,7 @@ const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
       width: 25px;
       height: 25px;
       border-radius: 50%;
-      background: red;
+      background: #595959;
       cursor: pointer;
     }
 
@@ -147,18 +161,18 @@ const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
         <img id="cameraImage" src="" style="width:200px;height:356px; transform:rotate(-90deg)"></td>
       </tr> 
       <tr>
-        <td class="button" ontouchstart='sendButtonInput("Tilt","45")' ontouchend='sendButtonInput("Tilt","135")'><span class="arrows" >&#8920;</span></td>
-        <td class="button" ontouchstart='sendButtonInput("MoveCar","1")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8679;</span></td>
-        <td class="button" ontouchstart='sendButtonInput("Pan","45")' ontouchend='sendButtonInput("Pan","135")'><span class="arrows" >&#8921;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("AutoCar","1")'><span class="arrows" >&#128472;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("MoveCar","1")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#11161;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("AutoCar","2")'><span class="arrows" >&#127950;</span></td>
       </tr>
       <tr>
-        <td class="button" ontouchstart='sendButtonInput("MoveCar","3")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8678;</span></td>
-        <td class="button" ontouchstart='sendButtonInput("Light","255")' ontouchend='sendButtonInput("Light","0")'><span class="arrows" >&#9876;</span></td>    
-        <td class="button" ontouchstart='sendButtonInput("MoveCar","4")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8680;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("MoveCar","3")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#11160;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("AutoCar","3")' ><span class="arrows" >&#9762;</span></td>    
+        <td class="button" ontouchstart='sendButtonInput("MoveCar","4")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#11162;</span></td>
       </tr>
       <tr>
         <td></td>
-        <td class="button" ontouchstart='sendButtonInput("MoveCar","2")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8681;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("MoveCar","2")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#11163;</span></td>
         <td></td>
       </tr>
       <tr/><tr/>
@@ -166,7 +180,7 @@ const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
         <td style="text-align:left"><b>Speed:</b></td>
         <td colspan=2>
          <div class="slidecontainer">
-            <input type="range" min="0" max="255" value="150" class="slider" id="Speed" oninput='sendButtonInput("Speed",value)'>
+            <input type="range" min="0" max="255" value="130" class="slider" id="Speed" oninput='sendButtonInput("Speed",value)'>
           </div>
         </td>
       </tr>        
@@ -270,6 +284,7 @@ void rotateMotor(int motorNumber, int motorDirection)
   }
 }
 
+int state_car;
 void moveCar(int inputValue)
 {
   Serial.printf("Got value as %d\n", inputValue);  
@@ -277,26 +292,36 @@ void moveCar(int inputValue)
   {
 
     case UP:
+      state_car = UP;
+      Serial.println("UP>>>");
       rotateMotor(RIGHT_MOTOR, FORWARD);
       rotateMotor(LEFT_MOTOR, FORWARD);                  
       break;
   
     case DOWN:
+      state_car = DOWN;
+      Serial.println("DOWN>>>");
       rotateMotor(RIGHT_MOTOR, BACKWARD);
       rotateMotor(LEFT_MOTOR, BACKWARD);  
       break;
   
     case LEFT:
+      state_car = LEFT;
+      Serial.println("LEFT>>>");
       rotateMotor(RIGHT_MOTOR, FORWARD);
       rotateMotor(LEFT_MOTOR, BACKWARD);  
       break;
   
     case RIGHT:
+      state_car = RIGHT;
+      Serial.println("RIGHT>>>");
       rotateMotor(RIGHT_MOTOR, BACKWARD);
       rotateMotor(LEFT_MOTOR, FORWARD); 
       break;
  
     case STOP:
+      state_car = STOP;
+      Serial.println("STOP>>>");
       rotateMotor(RIGHT_MOTOR, STOP);
       rotateMotor(LEFT_MOTOR, STOP);    
       break;
@@ -307,6 +332,108 @@ void moveCar(int inputValue)
       break;
   }
 }
+
+int f_auto=0;
+long distanceL;
+long distanceR;
+long distanceF;
+void autoMode()
+{
+  if(f_auto==1){
+
+    if(receive_distance_val > 12){
+      if(receive_sLeft_val==0  && receive_sRight_val==0)
+      {
+        if(state_car != UP){
+        moveCar(UP);
+        }
+      }
+      if(receive_sLeft_val==1  && receive_sRight_val==0)
+      {
+        if(state_car != LEFT){
+        moveCar(LEFT);
+        }
+      }
+      if(receive_sLeft_val==0  && receive_sRight_val==1)
+      {
+        if(state_car != RIGHT){
+        moveCar(RIGHT);
+        }
+      }
+      if(receive_sLeft_val==1  && receive_sRight_val==1)
+      {
+        if(state_car != STOP){
+        moveCar(STOP);
+        }
+      }
+    }
+    else{
+      moveCar(RIGHT);
+      delay(500);
+
+      moveCar(UP);
+      delay(500);
+
+      moveCar(LEFT);
+      delay(5000);
+
+      moveCar(UP);
+      delay(500);
+
+      moveCar(LEFT);
+      delay(500);
+
+      moveCar(UP);
+      delay(500);
+
+      moveCar(RIGHT);
+      delay(500);
+
+      moveCar(STOP);
+    }
+  }
+  else if(f_auto == 2){
+
+    distanceF = receive_distance_val;
+
+    if(distanceF < 12){
+      moveCar(STOP);
+      delay(500);
+
+      moveCar(LEFT);
+      delay(1000);
+      
+      moveCar(STOP);
+      distanceL = receive_distance_val; 
+      delay(500);
+
+      moveCar(RIGHT);
+      delay(2000);
+      
+      moveCar(STOP);
+      distanceR = receive_distance_val; 
+      delay(500);
+
+      if(distanceL > distanceR) {
+        moveCar(LEFT);
+        delay(2000);
+        moveCar(STOP);
+        delay(500);
+      }
+    }
+    else {
+      if(state_car != UP){
+      moveCar(UP);
+      }
+    }
+  }
+  else if(f_auto == 3){
+    if(state_car != STOP){
+      moveCar(STOP);
+    }
+  }
+}
+
 
 void handleRoot(AsyncWebServerRequest *request) 
 {
@@ -369,6 +496,12 @@ void onCarInputWebSocketEvent(AsyncWebSocket *server,
         else if (key == "Tilt")
         {
           tiltServo.write(valueInt);   
+        }
+        else if (key == "AutoCar")
+        {
+          f_auto = valueInt;
+          ledcWrite(PWMSpeedChannel,100);
+          autoMode();
         }             
       }
       break;
@@ -481,7 +614,7 @@ void sendCameraPicture()
   }
   
   unsigned long  startTime3 = millis();  
-  Serial.printf("Time taken Total: %d|%d|%d\n",startTime3 - startTime1, startTime2 - startTime1, startTime3-startTime2 );
+  //Serial.printf("Time taken Total: %d|%d|%d\n",startTime3 - startTime1, startTime2 - startTime1, startTime3-startTime2 );
 }
 
 void setUpPinModes()
@@ -507,12 +640,30 @@ void setUpPinModes()
   ledcAttachPin(LIGHT_PIN, PWMLightChannel);
 }
 
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+  memcpy(&receive_Data, incomingData, sizeof(receive_Data));
+  // Serial.println();
+  // Serial.println("<<<<< Receive Data:");
+  // Serial.print("Bytes received: ");
+  // Serial.println(len);
+  receive_sLeft_val = receive_Data.sLeft;
+  receive_sRight_val = receive_Data.sRight;
+  receive_distance_val = receive_Data.distance;
+  // Serial.println("Receive Data: ");
+  // Serial.println(receive_sLeft_val);
+  // Serial.println(receive_sRight_val);
+  // Serial.println(receive_distance_val);
+  // Serial.println("<<<<<");
+  autoMode();
+}
 
 void setup(void) 
 {
+  f_auto = 0;
   setUpPinModes();
   //Serial.begin(115200);
-
+  
+  WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(ssid, password);
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
@@ -529,6 +680,13 @@ void setup(void)
 
   server.begin();
   Serial.println("HTTP server started");
+
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+  
+  esp_now_register_recv_cb(OnDataRecv);
 
   setupCamera();
 }
