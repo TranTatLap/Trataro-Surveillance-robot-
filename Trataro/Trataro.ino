@@ -91,7 +91,7 @@ const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <style>
     .arrows {
-      font-size:30px;
+      font-size:35px;
       color:cyan;
     }
     td.button {
@@ -161,18 +161,18 @@ const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
         <img id="cameraImage" src="" style="width:200px;height:356px; transform:rotate(-90deg)"></td>
       </tr> 
       <tr>
-        <td class="button" ontouchstart='sendButtonInput("AutoCar","1")'><span class="arrows" >&#128472;</span></td>
-        <td class="button" ontouchstart='sendButtonInput("MoveCar","1")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#11161;</span></td>
-        <td class="button" ontouchstart='sendButtonInput("AutoCar","2")'><span class="arrows" >&#127950;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("AutoCar","1")'><span class="arrows" >&#8619;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("MoveCar","1")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8679;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("AutoCar","2")'><span class="arrows" >&#8620;</span></td>
       </tr>
       <tr>
-        <td class="button" ontouchstart='sendButtonInput("MoveCar","3")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#11160;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("MoveCar","3")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8678;</span></td>
         <td class="button" ontouchstart='sendButtonInput("AutoCar","3")' ><span class="arrows" >&#9762;</span></td>    
-        <td class="button" ontouchstart='sendButtonInput("MoveCar","4")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#11162;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("MoveCar","4")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8680;</span></td>
       </tr>
       <tr>
         <td></td>
-        <td class="button" ontouchstart='sendButtonInput("MoveCar","2")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#11163;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("MoveCar","2")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8681;</span></td>
         <td></td>
       </tr>
       <tr/><tr/>
@@ -261,7 +261,8 @@ const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
       });      
     </script>
   </body>    
-</html>
+</html>    
+
 )HTMLHOMEPAGE";
 
 
@@ -287,7 +288,7 @@ void rotateMotor(int motorNumber, int motorDirection)
 int state_car;
 void moveCar(int inputValue)
 {
-  Serial.printf("Got value as %d\n", inputValue);  
+  //Serial.printf("Got value as %d\n", inputValue);  
   switch(inputValue)
   {
 
@@ -340,63 +341,127 @@ long distanceF;
 void autoMode()
 {
   if(f_auto==1){
-
-    if(receive_distance_val > 12){
-      if(receive_sLeft_val==0  && receive_sRight_val==0)
+      if(receive_Data.sLeft==0  && receive_Data.sRight==0)
       {
         if(state_car != UP){
         moveCar(UP);
         }
       }
-      if(receive_sLeft_val==1  && receive_sRight_val==0)
+      if(receive_Data.sLeft==1  && receive_Data.sRight==0)
       {
         if(state_car != LEFT){
         moveCar(LEFT);
         }
       }
-      if(receive_sLeft_val==0  && receive_sRight_val==1)
+      if(receive_Data.sLeft==0  && receive_Data.sRight==1)
       {
         if(state_car != RIGHT){
         moveCar(RIGHT);
         }
       }
-      if(receive_sLeft_val==1  && receive_sRight_val==1)
+      if(receive_Data.sLeft==1  && receive_Data.sRight==1)
       {
         if(state_car != STOP){
         moveCar(STOP);
         }
       }
     }
-    else{
-      moveCar(RIGHT);
-      delay(500);
+    //Serial.println(receive_Data.distance);
+  //   if(receive_Data.distance > 15){
+  //     if(receive_Data.sLeft==0  && receive_Data.sRight==0)
+  //     {
+  //       if(state_car != UP){
+  //       moveCar(UP);
+  //       }
+  //     }
+  //     if(receive_Data.sLeft==1  && receive_Data.sRight==0)
+  //     {
+  //       if(state_car != LEFT){
+  //       moveCar(LEFT);
+  //       }
+  //     }
+  //     if(receive_Data.sLeft==0  && receive_Data.sRight==1)
+  //     {
+  //       if(state_car != RIGHT){
+  //       moveCar(RIGHT);
+  //       }
+  //     }
+  //     if(receive_Data.sLeft==1  && receive_Data.sRight==1)
+  //     {
+  //       if(state_car != STOP){
+  //       moveCar(STOP);
+  //       }
+  //     }
+  //   }
+  //   else{
 
-      moveCar(UP);
-      delay(500);
+  //     while(receive_Data.distance <= 15){
+  //       moveCar(LEFT);
+  //       delay(500);
+  //     }
 
-      moveCar(LEFT);
-      delay(5000);
+  //     while(receive_Data.distance > 15){
+  //       moveCar(UP);
+  //       delay(500);
 
-      moveCar(UP);
-      delay(500);
+  //       moveCar(RIGHT);
+  //       delay(1000);
+  //       if(receive_Data.distance > 15){
+  //         break;
+  //       }
+  //       else{
+  //         moveCar(LEFT);
+  //         delay(1000);
+  //       }
+  //     }
+      
+  //   }
+  // }
+  // else if(f_auto == 2){
 
-      moveCar(LEFT);
-      delay(500);
+  //   distanceF = receive_distance_val;
 
-      moveCar(UP);
-      delay(500);
+  //   if(distanceF < 15){
+  //     moveCar(STOP);
+  //     delay(500);
 
-      moveCar(RIGHT);
-      delay(500);
+  //     moveCar(LEFT);
+  //     delay(1000);
+      
+  //     moveCar(STOP);
+  //     distanceL = receive_distance_val; 
+  //     delay(500);
 
-      moveCar(STOP);
-    }
-  }
-  else if(f_auto == 2){
+  //     moveCar(RIGHT);
+  //     delay(2000);
+      
+  //     moveCar(STOP);
+  //     distanceR = receive_distance_val; 
+  //     delay(500);
 
+  //     if(distanceL > distanceR) {
+  //       moveCar(LEFT);
+  //       delay(2000);
+  //       moveCar(STOP);
+  //       delay(500);
+  //     }
+  //   }
+  //   else {
+  //     if(state_car != UP){
+  //     moveCar(UP);
+  //     }
+  //   }
+  // }
+  else {}
+  
+}
+
+bool f_avoid = false;
+void avoiding(bool f){
+  if(f){
     distanceF = receive_distance_val;
 
-    if(distanceF < 12){
+    if(distanceF < 15){
       moveCar(STOP);
       delay(500);
 
@@ -425,11 +490,6 @@ void autoMode()
       if(state_car != UP){
       moveCar(UP);
       }
-    }
-  }
-  else if(f_auto == 3){
-    if(state_car != STOP){
-      moveCar(STOP);
     }
   }
 }
@@ -499,9 +559,13 @@ void onCarInputWebSocketEvent(AsyncWebSocket *server,
         }
         else if (key == "AutoCar")
         {
-          f_auto = valueInt;
-          ledcWrite(PWMSpeedChannel,100);
-          autoMode();
+          if(valueInt == 2){ f_avoid = true; avoiding(f_avoid);}
+          else{
+            f_auto = valueInt;
+            ledcWrite(PWMSpeedChannel,70);
+            autoMode();
+          }
+          
         }             
       }
       break;
@@ -691,9 +755,9 @@ void setup(void)
   setupCamera();
 }
 
-
 void loop() 
 {
+  avoiding(f_avoid);
   wsCamera.cleanupClients(); 
   wsCarInput.cleanupClients(); 
   sendCameraPicture(); 
