@@ -8,8 +8,27 @@
 #include <ESP32Servo.h>
 #include <esp_now.h>
 
+#include <esp32-cam-object-detection_inferencing.h>
+#include "esp32cam.h"
+#include "esp32cam/tinyml/edgeimpulse/FOMO.h"
+
 #define PAN_PIN 14
 #define TILT_PIN 15
+
+#define MAX_RESOLUTION_VGA 1
+
+/**
+ * Run Edge Impulse FOMO model on the Esp32 camera
+ */
+
+// replace with the name of your library
+
+
+
+using namespace Eloquent::Esp32cam;
+
+Cam cam;
+TinyML::EdgeImpulse::FOMO fomo;
 
 Servo panServo;
 Servo tiltServo;
@@ -658,7 +677,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   autoMode();
 }
 
-void setup(void) 
+void setup() 
 {
   f_auto = 0;
   setUpPinModes();
@@ -690,6 +709,14 @@ void setup(void)
   esp_now_register_recv_cb(OnDataRecv);
 
   setupCamera();
+
+  //cam.aithinker();
+  //  cam.highQuality();
+  //  cam.highestSaturation();
+  //  cam.vga();
+
+  //  while (!cam.begin())
+  //      Serial.println(cam.getErrorMessage());
 }
 
 void loop() 
@@ -699,4 +726,39 @@ void loop()
   wsCarInput.cleanupClients(); 
   sendCameraPicture(); 
   //Serial.printf("SPIRam Total heap %d, SPIRam Free Heap %d\n", ESP.getPsramSize(), ESP.getFreePsram());
+
+  //if (!cam.capture()) {
+  //      Serial.println(cam.getErrorMessage());
+  //      delay(1000);
+  //      return;
+  //  }
+
+    // run FOMO model
+    if (!fomo.detectObjects(cam)) {
+        Serial.println(fomo.getErrorMessage());
+        delay(1000);
+        return;
+    }
+
+    // print found bounding boxes
+    if (fomo.hasObjects()) {
+        Serial.printf("Found %d objects in %d millis\n", fomo.count(), fomo.getExecutionTimeInMillis());
+
+        fomo.forEach([](size_t ix, ei_impulse_result_bounding_box_t bbox) {
+            Serial.print(" > BBox of label ");
+            Serial.print(bbox.label);
+            Serial.print(" at (");
+            Serial.print(bbox.x);
+            Serial.print(", ");
+            Serial.print(bbox.y);
+            Serial.print("), size ");
+            Serial.print(bbox.width);
+            Serial.print(" x ");
+            Serial.print(bbox.height);
+            Serial.println();
+        });
+    }
+    else {
+        Serial.println("No objects detected");
+    }
 }
