@@ -91,7 +91,7 @@ void loop() {
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH);
   dis = (duration/2) / 29.1;
-  if(dis<=15){
+  if(dis<=20){
     dis = 0;
   }
   else {

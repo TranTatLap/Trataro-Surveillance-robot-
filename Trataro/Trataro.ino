@@ -386,7 +386,7 @@ void avoiding(){
       delay(500);
 
       moveCar(RIGHT);
-      delay(2000);
+      delay(1500);
       
       moveCar(STOP);
       distanceR = receive_distance_val; 
@@ -394,13 +394,21 @@ void avoiding(){
 
       if(distanceL == 1 && distanceR == 0) {
         moveCar(LEFT);
-        delay(2000);
+        delay(1500);
         moveCar(STOP);
       }
 
       if(distanceL == 0 && distanceR == 0){
+        moveCar(LEFT);
+        delay(1500);
+        moveCar(STOP);
+        delay(500);
         moveCar(DOWN);
         delay(2000);
+        moveCar(STOP);
+        delay(500);
+        moveCar(RIGHT);
+        delay(1500);
         moveCar(STOP);
       }
     }
@@ -484,12 +492,14 @@ void onCarInputWebSocketEvent(AsyncWebSocket *server,
           }
           else if(valueInt == 1){
             f_auto = true;
-            ledcWrite(PWMSpeedChannel,70);
+            ledcWrite(PWMSpeedChannel,80);
             autoMode();
           }
           else{
             f_avoid = false;
             f_auto = false;
+            moveCar(STOP);
+            avoiding();
             ledcWrite(PWMSpeedChannel,130);
           }
           
