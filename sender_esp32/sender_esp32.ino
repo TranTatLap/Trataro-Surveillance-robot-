@@ -1,10 +1,10 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-#define trigPin 12  
-#define echoPin 13 
-#define sLeftPin 25
-#define sRightPin 27
+#define trigPin 1  
+#define echoPin 2 
+#define sLeftPin 6
+#define sRightPin 7
 //----------------------------------------
 
 uint8_t broadcastAddress[] = {0x78, 0x21, 0x84, 0xE4, 0xA5, 0x2C}; //--> REPLACE WITH THE MAC Address of your receiver / ESP32 Receiver.
@@ -22,7 +22,7 @@ String success; //--> Variable to store if sending data was successful.
 typedef struct struct_message {
     int sLeft;
     int sRight;
-    long distance;
+    int distance;
 } struct_message;
 
 struct_message send_Data; //--> Create a struct_message to send data.
@@ -91,7 +91,12 @@ void loop() {
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH);
   dis = (duration/2) / 29.1;
-
+  if(dis<=15){
+    dis = 0;
+  }
+  else {
+    dis = 1;
+  }
 
   //----------------------------------------Set values to send
   send_sLeft_val = digitalRead(sLeftPin);

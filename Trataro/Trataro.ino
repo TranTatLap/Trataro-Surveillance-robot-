@@ -43,12 +43,12 @@ std::vector<MOTOR_PINS> motorPins =
 //ESP-NOW variable
 int receive_sLeft_val;
 int receive_sRight_val;
-long receive_distance_val;
+int receive_distance_val;
 
 typedef struct struct_message {
     int sLeft;
     int sRight;
-    long distance;
+    int distance;
 } struct_message; //--> struct_message to receive data.
 
 struct_message receive_Data;
@@ -161,13 +161,13 @@ const char* htmlHomePage PROGMEM = R"HTMLHOMEPAGE(
         <img id="cameraImage" src="" style="width:200px;height:356px; transform:rotate(-90deg)"></td>
       </tr> 
       <tr>
-        <td class="button" ontouchstart='sendButtonInput("AutoCar","1")'><span class="arrows" >&#8619;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("AutoCar","1")'><span class="arrows" >Line</span></td>
         <td class="button" ontouchstart='sendButtonInput("MoveCar","1")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8679;</span></td>
-        <td class="button" ontouchstart='sendButtonInput("AutoCar","2")'><span class="arrows" >&#8620;</span></td>
+        <td class="button" ontouchstart='sendButtonInput("AutoCar","-1")'><span class="arrows" >Avoid</span></td>
       </tr>
       <tr>
         <td class="button" ontouchstart='sendButtonInput("MoveCar","3")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8678;</span></td>
-        <td class="button" ontouchstart='sendButtonInput("AutoCar","3")' ><span class="arrows" >&#9762;</span></td>    
+        <td class="button" ontouchstart='sendButtonInput("AutoCar","0")' ><span class="arrows" >&#9762;</span></td>    
         <td class="button" ontouchstart='sendButtonInput("MoveCar","4")' ontouchend='sendButtonInput("MoveCar","0")'><span class="arrows" >&#8680;</span></td>
       </tr>
       <tr>
@@ -334,134 +334,47 @@ void moveCar(int inputValue)
   }
 }
 
-int f_auto=0;
-long distanceL;
-long distanceR;
-long distanceF;
+bool f_auto=true;
+int distanceL, distanceR, distanceF;
 void autoMode()
 {
-  if(f_auto==1){
-      if(receive_Data.sLeft==0  && receive_Data.sRight==0)
-      {
-        if(state_car != UP){
-        moveCar(UP);
-        }
-      }
-      if(receive_Data.sLeft==1  && receive_Data.sRight==0)
-      {
-        if(state_car != LEFT){
-        moveCar(LEFT);
-        }
-      }
-      if(receive_Data.sLeft==0  && receive_Data.sRight==1)
-      {
-        if(state_car != RIGHT){
-        moveCar(RIGHT);
-        }
-      }
-      if(receive_Data.sLeft==1  && receive_Data.sRight==1)
-      {
-        if(state_car != STOP){
-        moveCar(STOP);
-        }
+  if(f_auto){
+
+    if(receive_Data.sLeft==0  && receive_Data.sRight==0)
+    {
+      if(state_car != UP){
+      moveCar(UP);
       }
     }
-    //Serial.println(receive_Data.distance);
-  //   if(receive_Data.distance > 15){
-  //     if(receive_Data.sLeft==0  && receive_Data.sRight==0)
-  //     {
-  //       if(state_car != UP){
-  //       moveCar(UP);
-  //       }
-  //     }
-  //     if(receive_Data.sLeft==1  && receive_Data.sRight==0)
-  //     {
-  //       if(state_car != LEFT){
-  //       moveCar(LEFT);
-  //       }
-  //     }
-  //     if(receive_Data.sLeft==0  && receive_Data.sRight==1)
-  //     {
-  //       if(state_car != RIGHT){
-  //       moveCar(RIGHT);
-  //       }
-  //     }
-  //     if(receive_Data.sLeft==1  && receive_Data.sRight==1)
-  //     {
-  //       if(state_car != STOP){
-  //       moveCar(STOP);
-  //       }
-  //     }
-  //   }
-  //   else{
+    if(receive_Data.sLeft==1  && receive_Data.sRight==0)
+    {
+      if(state_car != LEFT){
+      moveCar(LEFT);
+      }
+    }
+    if(receive_Data.sLeft==0  && receive_Data.sRight==1)
+    {
+      if(state_car != RIGHT){
+      moveCar(RIGHT);
+      }
+    }
+    if(receive_Data.sLeft==1  && receive_Data.sRight==1)
+    {
+      if(state_car != STOP){
+      moveCar(STOP);
+      }
+    }
 
-  //     while(receive_Data.distance <= 15){
-  //       moveCar(LEFT);
-  //       delay(500);
-  //     }
-
-  //     while(receive_Data.distance > 15){
-  //       moveCar(UP);
-  //       delay(500);
-
-  //       moveCar(RIGHT);
-  //       delay(1000);
-  //       if(receive_Data.distance > 15){
-  //         break;
-  //       }
-  //       else{
-  //         moveCar(LEFT);
-  //         delay(1000);
-  //       }
-  //     }
-      
-  //   }
-  // }
-  // else if(f_auto == 2){
-
-  //   distanceF = receive_distance_val;
-
-  //   if(distanceF < 15){
-  //     moveCar(STOP);
-  //     delay(500);
-
-  //     moveCar(LEFT);
-  //     delay(1000);
-      
-  //     moveCar(STOP);
-  //     distanceL = receive_distance_val; 
-  //     delay(500);
-
-  //     moveCar(RIGHT);
-  //     delay(2000);
-      
-  //     moveCar(STOP);
-  //     distanceR = receive_distance_val; 
-  //     delay(500);
-
-  //     if(distanceL > distanceR) {
-  //       moveCar(LEFT);
-  //       delay(2000);
-  //       moveCar(STOP);
-  //       delay(500);
-  //     }
-  //   }
-  //   else {
-  //     if(state_car != UP){
-  //     moveCar(UP);
-  //     }
-  //   }
-  // }
-  else {}
+  }
   
 }
 
 bool f_avoid = false;
-void avoiding(bool f){
-  if(f){
+void avoiding(){
+  if(f_avoid){
     distanceF = receive_distance_val;
 
-    if(distanceF < 15){
+    if(distanceF == 0){
       moveCar(STOP);
       delay(500);
 
@@ -479,11 +392,16 @@ void avoiding(bool f){
       distanceR = receive_distance_val; 
       delay(500);
 
-      if(distanceL > distanceR) {
+      if(distanceL == 1 && distanceR == 0) {
         moveCar(LEFT);
         delay(2000);
         moveCar(STOP);
-        delay(500);
+      }
+
+      if(distanceL == 0 && distanceR == 0){
+        moveCar(DOWN);
+        delay(2000);
+        moveCar(STOP);
       }
     }
     else {
@@ -559,11 +477,20 @@ void onCarInputWebSocketEvent(AsyncWebSocket *server,
         }
         else if (key == "AutoCar")
         {
-          if(valueInt == 2){ f_avoid = true; avoiding(f_avoid);}
-          else{
-            f_auto = valueInt;
+          if(valueInt == -1){
+            f_avoid = true;
+            avoiding();
+            ledcWrite(PWMSpeedChannel,90);
+          }
+          else if(valueInt == 1){
+            f_auto = true;
             ledcWrite(PWMSpeedChannel,70);
             autoMode();
+          }
+          else{
+            f_avoid = false;
+            f_auto = false;
+            ledcWrite(PWMSpeedChannel,130);
           }
           
         }             
@@ -757,7 +684,7 @@ void setup(void)
 
 void loop() 
 {
-  avoiding(f_avoid);
+  avoiding();
   wsCamera.cleanupClients(); 
   wsCarInput.cleanupClients(); 
   sendCameraPicture(); 
